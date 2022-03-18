@@ -14,7 +14,7 @@ use actix_web::*;
 async fn main() -> std::io::Result<()> {
   println!("Server running on port 3000");
 
-  HttpServer::new(|| App::new().configure(app::seller::config))
+  HttpServer::new(|| App::new().configure(app::seller::service::config))
     .bind("localhost:3000")?
     .run()
     .await

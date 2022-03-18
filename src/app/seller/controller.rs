@@ -1,3 +1,4 @@
+use super::model::{Seller, SellerForm, TokenPayload};
 use crate::{
   config::connection,
   schema::{
@@ -7,55 +8,17 @@ use crate::{
   structs::{AuthForm, JsonResult, Token},
 };
 use actix_web::{
-  web,
-  web::{Form, Json, ServiceConfig},
+  web::{Form, Json},
   HttpRequest, Responder,
 };
 use bcrypt::{hash, verify, DEFAULT_COST};
-use chrono::NaiveDateTime;
-use diesel::{delete, insert_into, prelude::*, update, AsChangeset, Insertable};
+use diesel::{delete, insert_into, prelude::*, update};
 use jsonwebtoken::{encode, EncodingKey, Header};
-use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-#[derive(Queryable, Serialize, Debug)]
-pub struct Seller {
-  pub id: String,
-  pub name: String,
-  pub address: Option<String>,
-  pub email: String,
-  pub password: String,
-  pub phone: Option<String>,
-  pub created_at: NaiveDateTime,
-  pub updated_at: NaiveDateTime,
-}
-
-#[derive(Insertable, PartialEq, Deserialize, AsChangeset)]
-#[table_name = "sellers"]
-pub struct SellerForm {
-  pub name: String,
-  pub address: Option<String>,
-  pub email: String,
-  pub password: String,
-  pub phone: Option<String>,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct TokenPayload {
-  pub id: String,
-  pub name: String,
-  pub address: Option<String>,
-  pub email: String,
-  pub phone: Option<String>,
-  pub created_at: NaiveDateTime,
-  pub updated_at: NaiveDateTime,
-}
-
 impl Seller {
-  async fn login(form: Form<AuthForm>) -> impl Responder {
-    let seller = dsl::sellers
-      .filter(email.eq(form.email.clone()))
-      .first::<Self>(&connection());
+  pub async fn login(form: Form<AuthForm>) -> impl Responder {
+    let seller = dsl::sellers.filter(email.eq(form.email.clone())).first::<Self>(&connection());
 
     match seller {
       Ok(res) => {
@@ -101,10 +64,8 @@ impl Seller {
     }
   }
 
-  async fn register(form: Form<SellerForm>) -> impl Responder {
-    let seller = dsl::sellers
-      .filter(email.eq(form.email.clone()))
-      .first::<Self>(&connection());
+  pub async fn register(form: Form<SellerForm>) -> impl Responder {
+    let seller = dsl::sellers.filter(email.eq(form.email.clone())).first::<Self>(&connection());
 
     match seller {
       Ok(_value) => Json(json!(JsonResult {
@@ -129,9 +90,7 @@ impl Seller {
           },
         };
 
-        let registered = insert_into(sellers::table)
-          .values(new_seller)
-          .execute(&connection());
+        let registered = insert_into(sellers::table).values(new_seller).execute(&connection());
 
         match registered {
           Ok(res) => Json(json!(JsonResult {
@@ -149,7 +108,7 @@ impl Seller {
     }
   }
 
-  async fn list() -> impl Responder {
+  pub async fn list() -> impl Responder {
     let sellers = dsl::sellers.load::<Self>(&connection());
 
     match sellers {
@@ -166,13 +125,9 @@ impl Seller {
     }
   }
 
-  async fn detail(req: HttpRequest) -> impl Responder {
+  pub async fn detail(req: HttpRequest) -> impl Responder {
     let id = req.match_info().get("id").unwrap();
-    let seller = dsl::sellers
-      .find(id)
-      .first::<Self>(&connection())
-      .optional()
-      .unwrap();
+    let seller = dsl::sellers.find(id).first::<Self>(&connection()).optional().unwrap();
 
     match seller {
       Some(res) => Json(json!(JsonResult {
@@ -188,7 +143,7 @@ impl Seller {
     }
   }
 
-  async fn update(req: HttpRequest, form: Form<SellerForm>) -> impl Responder {
+  pub async fn update(req: HttpRequest, form: Form<SellerForm>) -> impl Responder {
     let id = req.match_info().get("id").unwrap();
     let data = SellerForm {
       address: form.address.clone(),
@@ -198,9 +153,7 @@ impl Seller {
       phone: form.phone.clone(),
     };
 
-    let updated = update(dsl::sellers.find(id))
-      .set(data)
-      .execute(&connection());
+    let updated = update(dsl::sellers.find(id)).set(data).execute(&connection());
 
     match updated {
       Ok(res) => Json(json!(JsonResult {
@@ -216,7 +169,7 @@ impl Seller {
     }
   }
 
-  async fn destroy(req: HttpRequest) -> impl Responder {
+  pub async fn destroy(req: HttpRequest) -> impl Responder {
     let id = req.match_info().get("id").unwrap();
     let seller = dsl::sellers
       .find(id)
@@ -231,9 +184,7 @@ impl Seller {
 
     match is_exists {
       Ok(_res) => {
-        delete(dsl::sellers.find(id))
-          .execute(&connection())
-          .unwrap();
+        delete(dsl::sellers.find(id)).execute(&connection()).unwrap();
         return Json(json!(JsonResult {
           code: 200,
           data: None::<i32>,
@@ -247,16 +198,4 @@ impl Seller {
       })),
     }
   }
-}
-
-pub fn config(cfg: &mut ServiceConfig) -> () {
-  cfg.service(
-    web::scope("/api/v1/sellers")
-      .route("/login", web::post().to(Seller::login))
-      .route("/register", web::post().to(Seller::register))
-      .route("", web::get().to(Seller::list))
-      .route("/{id}", web::get().to(Seller::detail))
-      .route("/{id}", web::patch().to(Seller::update))
-      .route("/{id}", web::delete().to(Seller::destroy)),
-  );
 }
