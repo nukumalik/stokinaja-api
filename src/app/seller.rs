@@ -55,52 +55,50 @@ impl Seller {
   async fn login(form: Form<AuthForm>) -> impl Responder {
     let seller = dsl::sellers
       .filter(email.eq(form.email.clone()))
-      .first::<Self>(&connection())
-      .ok()
-      .unwrap();
+      .first::<Self>(&connection());
 
-    if seller.email.is_empty() {
-      return Json(json!(JsonResult {
+    match seller {
+      Ok(res) => {
+        let is_match = verify(form.password.clone(), res.password.as_str());
+
+        match is_match {
+          Ok(_value) => {
+            let token_payload = TokenPayload {
+              id: res.id.clone(),
+              address: res.address.clone(),
+              name: res.name.clone(),
+              email: res.email.clone(),
+              phone: res.phone.clone(),
+              created_at: res.created_at.clone(),
+              updated_at: res.updated_at.clone(),
+            };
+
+            let token = encode(
+              &Header::default(),
+              &token_payload,
+              &EncodingKey::from_secret("secret".as_ref()),
+            )
+            .unwrap();
+
+            Json(json!(JsonResult {
+              code: 200,
+              data: Some(json!(Token { token })),
+              message: String::from("Success to login")
+            }))
+          }
+          Err(_error) => Json(json!(JsonResult {
+            code: 400,
+            data: None::<i32>,
+            message: String::from("Password is invalid")
+          })),
+        }
+      }
+      Err(_error) => Json(json!(JsonResult {
         code: 400,
         data: None::<i32>,
         message: String::from("Failed to login")
-      }));
+      })),
     }
-
-    let is_match = verify(form.password.clone(), seller.password.as_str())
-      .ok()
-      .unwrap();
-
-    if !is_match {
-      return Json(json!(JsonResult {
-        code: 400,
-        data: None::<i32>,
-        message: String::from("Password is invalid")
-      }));
-    }
-
-    let token_payload = TokenPayload {
-      id: seller.id.clone(),
-      address: seller.address.clone(),
-      name: seller.name.clone(),
-      email: seller.email.clone(),
-      phone: seller.phone.clone(),
-      created_at: seller.created_at.clone(),
-      updated_at: seller.updated_at.clone(),
-    };
-
-    let token = encode(
-      &Header::default(),
-      &token_payload,
-      &EncodingKey::from_secret("secret".as_ref()),
-    )
-    .unwrap();
-
-    Json(json!(JsonResult {
-      code: 200,
-      data: Some(json!(Token { token })),
-      message: String::from("Success to login")
-    }))
   }
 
   async fn register(form: Form<SellerForm>) -> impl Responder {
@@ -108,45 +106,46 @@ impl Seller {
       .filter(email.eq(form.email.clone()))
       .first::<Self>(&connection());
 
-    if seller.is_ok() {
-      return Json(json!(JsonResult {
+    match seller {
+      Ok(_value) => Json(json!(JsonResult {
         code: 401,
         data: None::<i32>,
         message: String::from("Email was registered")
-      }));
-    }
-
-    let new_seller = SellerForm {
-      name: form.name.clone(),
-      address: if form.address.is_some() {
-        Some(form.address.clone().unwrap())
-      } else {
-        None
-      },
-      email: form.email.clone(),
-      password: hash(form.password.clone(), DEFAULT_COST).unwrap(),
-      phone: if form.phone.is_some() {
-        Some(form.phone.clone().unwrap())
-      } else {
-        None
-      },
-    };
-
-    let registered = insert_into(sellers::table)
-      .values(new_seller)
-      .execute(&connection());
-
-    match registered {
-      Ok(res) => Json(json!(JsonResult {
-        code: 200,
-        data: Some(res),
-        message: String::from("Success to register new seller")
       })),
-      Err(error) => Json(json!(JsonResult {
-        code: 401,
-        data: None::<i32>,
-        message: format!("{}", error)
-      })),
+      Err(_err) => {
+        let new_seller = SellerForm {
+          name: form.name.clone(),
+          address: if form.address.is_some() {
+            Some(form.address.clone().unwrap())
+          } else {
+            None
+          },
+          email: form.email.clone(),
+          password: hash(form.password.clone(), DEFAULT_COST).unwrap(),
+          phone: if form.phone.is_some() {
+            Some(form.phone.clone().unwrap())
+          } else {
+            None
+          },
+        };
+
+        let registered = insert_into(sellers::table)
+          .values(new_seller)
+          .execute(&connection());
+
+        match registered {
+          Ok(res) => Json(json!(JsonResult {
+            code: 200,
+            data: Some(res),
+            message: String::from("Success to register new seller")
+          })),
+          Err(error) => Json(json!(JsonResult {
+            code: 401,
+            data: None::<i32>,
+            message: format!("{}", error)
+          })),
+        }
+      }
     }
   }
 
