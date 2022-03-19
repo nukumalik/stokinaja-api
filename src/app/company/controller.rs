@@ -23,7 +23,7 @@ impl Company {
       })),
       Err(_error) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: String::from("Failed to get company list")
       })),
     }
@@ -41,12 +41,12 @@ impl Company {
       })),
       Err(Error::NotFound) => Json(json!(JsonResult {
         code: 404,
-        data: None::<i32>,
+        data: None::<()>,
         message: String::from("Company not found")
       })),
       Err(_) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: String::from("Failed to get company detail")
       })),
     }
@@ -71,7 +71,7 @@ impl Company {
       })),
       Err(_) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: String::from("Failed to create company")
       })),
     }
@@ -117,12 +117,12 @@ impl Company {
         match updated {
           Ok(_) => Json(json!(JsonResult {
             code: 200,
-            data: None::<i32>,
+            data: None::<()>,
             message: String::from("Success to update company")
           })),
           Err(_) => Json(json!(JsonResult {
             code: 400,
-            data: None::<i32>,
+            data: None::<()>,
             message: String::from("Failed to update company")
           })),
         }
@@ -130,14 +130,14 @@ impl Company {
       Err(Error::NotFound) => {
         return Json(json!(JsonResult {
           code: 404,
-          data: None::<i32>,
+          data: None::<()>,
           message: String::from("Company not found")
         }));
       }
       Err(_) => {
         return Json(json!(JsonResult {
           code: 400,
-          data: None::<i32>,
+          data: None::<()>,
           message: String::from("Failed to get company detail")
         }));
       }
@@ -162,13 +162,13 @@ impl Company {
         delete(dsl::companies.find(id)).execute(&connection()).unwrap();
         return Json(json!(JsonResult {
           code: 200,
-          data: None::<i32>,
+          data: None::<()>,
           message: String::from("Success to delete company")
         }));
       }
       Err(error) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: format!("{}", error)
       })),
     }

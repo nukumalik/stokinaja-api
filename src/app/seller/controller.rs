@@ -51,14 +51,14 @@ impl Seller {
           }
           Err(_error) => Json(json!(JsonResult {
             code: 400,
-            data: None::<i32>,
+            data: None::<()>,
             message: String::from("Password is invalid")
           })),
         }
       }
       Err(_error) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: String::from("Failed to login")
       })),
     }
@@ -70,7 +70,7 @@ impl Seller {
     match seller {
       Ok(_value) => Json(json!(JsonResult {
         code: 401,
-        data: None::<i32>,
+        data: None::<()>,
         message: String::from("Email was registered")
       })),
       Err(_err) => {
@@ -100,7 +100,7 @@ impl Seller {
           })),
           Err(error) => Json(json!(JsonResult {
             code: 401,
-            data: None::<i32>,
+            data: None::<()>,
             message: format!("{}", error)
           })),
         }
@@ -119,7 +119,7 @@ impl Seller {
       })),
       Err(error) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: format!("{}", error)
       })),
     }
@@ -137,7 +137,7 @@ impl Seller {
       })),
       None => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: String::from("Failed to get seller detail")
       })),
     }
@@ -163,7 +163,7 @@ impl Seller {
       })),
       Err(error) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: format!("{}", error)
       })),
     }
@@ -187,13 +187,13 @@ impl Seller {
         delete(dsl::sellers.find(id)).execute(&connection()).unwrap();
         return Json(json!(JsonResult {
           code: 200,
-          data: None::<i32>,
+          data: None::<()>,
           message: String::from("Success to delete seller")
         }));
       }
       Err(error) => Json(json!(JsonResult {
         code: 400,
-        data: None::<i32>,
+        data: None::<()>,
         message: format!("{}", error)
       })),
     }
