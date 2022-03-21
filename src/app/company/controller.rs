@@ -152,13 +152,8 @@ impl Company {
       .optional()
       .expect("Failed to get company");
 
-    let is_exists = match company {
-      Some(res) => Ok(res),
-      None => Err("Company not found"),
-    };
-
-    match is_exists {
-      Ok(_res) => {
+    match company {
+      Some(_res) => {
         delete(dsl::companies.find(id)).execute(&connection()).unwrap();
         return Json(json!(JsonResult {
           code: 200,
@@ -166,10 +161,10 @@ impl Company {
           message: String::from("Success to delete company")
         }));
       }
-      Err(error) => Json(json!(JsonResult {
+      None => Json(json!(JsonResult {
         code: 400,
         data: None::<()>,
-        message: format!("{}", error)
+        message: String::from("Company not found")
       })),
     }
   }

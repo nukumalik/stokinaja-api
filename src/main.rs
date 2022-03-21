@@ -6,7 +6,6 @@ mod app;
 mod config;
 mod schema;
 mod structs;
-mod traits;
 
 use actix_web::*;
 

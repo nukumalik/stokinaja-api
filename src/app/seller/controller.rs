@@ -177,13 +177,8 @@ impl Seller {
       .optional()
       .expect("Failed to get seller");
 
-    let is_exists = match seller {
-      Some(res) => Ok(res),
-      None => Err("Seller not found"),
-    };
-
-    match is_exists {
-      Ok(_res) => {
+    match seller {
+      Some(_res) => {
         delete(dsl::sellers.find(id)).execute(&connection()).unwrap();
         return Json(json!(JsonResult {
           code: 200,
@@ -191,10 +186,10 @@ impl Seller {
           message: String::from("Success to delete seller")
         }));
       }
-      Err(error) => Json(json!(JsonResult {
+      None => Json(json!(JsonResult {
         code: 400,
         data: None::<()>,
-        message: format!("{}", error)
+        message: String::from("Seller not found")
       })),
     }
   }
