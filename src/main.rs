@@ -18,6 +18,7 @@ async fn main() -> std::io::Result<()> {
     App::new()
       .configure(app::seller::service::config)
       .configure(app::company::service::config)
+      .configure(app::supplier::service::config)
   })
   .bind("localhost:3000")?
   .run()
